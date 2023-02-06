@@ -11,19 +11,20 @@ dataCollectorArg: dict = {
 
 ''' Variant values '''
 variant: dict = {
-    "V1": 1,
-    "V2": 2,
-    "V3": 3,
-    "V4": 4,
-    "Invalid": -1,
+    'V1': 1,
+    'V2': 2,
+    'V3': 3,
+    'V4': 4,
+    'Invalid': -1,
 }
 
 ''' Default values '''
-default: dict = {"variant": variant["Invalid"], "interval": "30M"}
+default: dict = {'variant': variant['Invalid'], 'interval': '30M'}
 
 ''' Valid values '''
 valid: dict = {
-    "period": ['1d','5d','1mo','3mo','6mo','1y','2y','5y','10y','ytd','max'],
+    'period': ['1d','5d','1mo','3mo','6mo','1y','2y','5y','10y','ytd','max'],
+    'interval': ['1m','2m','5m','15m','30m','60m','90m','1h','1d','5d','1wk','1mo','3mo'],
 }
 
 ''' Collects data within a given period and an interval of a given ticker. '''
@@ -39,8 +40,8 @@ class DataCollector:
     '''
 
     def __init__(self, args: dataCollectorArg) -> None:
-        self.variant = args["variant"] if 'variant' in args else default["variant"]        # Default variant 3
-        self.interval = args["interval"] if 'interval' in args else default["interval"]     # Default interval '30M'
+        self.variant = args['variant'] if 'variant' in args else default['variant']        # Default variant 3
+        self.interval = args['interval'] if 'interval' in args else default['interval']     # Default interval '30M'
         self.args = args
         # continue: validate args, py dataframes, share mem, dataclasses etc.
 
@@ -58,36 +59,39 @@ class DataCollector:
         
         if 'period' in self.args:
             if 'start' in self.args:
-                self.variant = variant["V1"]
+                self.variant = variant['V1']
             elif 'end' in self.args:
-                self.variant = variant["V2"]
+                self.variant = variant['V2']
             else:
-                self.variant = variant["V3"]
+                self.variant = variant['V3']
         elif 'start' in self.args and 'end' in self.args:
-            self.variant = variant["V4"]
+            self.variant = variant['V4']
         else:
-            self.variant = variant["Invalid"]
+            self.variant = variant['Invalid']
 
 
     def __validate(self) -> None:
 
         ''' Validate arguments (according to variants)'''
 
+        # Valid interval
+        if self.args['interval'] not in valid['interval']:
+            raise AssertionError('Invalid interval. Valid intervals include: ', valid['interval'])
+
         vrt = self.variant
-        start, end = '', ''
-        if vrt == variant["Invalid"]:
+        if vrt == variant['Invalid']:
             raise IndexError('Invalid input arguments')
-        elif vrt == variant["V4"]:
+        elif vrt == variant['V4']:
             start = datetime.strptime(self.args['start'], '%Y-%m-%d')
             end = datetime.strptime(self.args['end'], '%Y-%m-%d')
-        if end < start:
-            raise ValueError('Start date must be before the end date')
+            if end < start:
+                raise ValueError('Start date must be before the end date')
         else:
-            if self.args['period'] not in valid["period"]:
-                raise AssertionError('Invalid period. Valid periods include: ', valid["period"])
-            if vrt == variant["V1"]:
+            if self.args['period'] not in valid['period']:
+                raise AssertionError('Invalid period. Valid periods include: ', valid['period'])
+            if vrt == variant['V1']:
                 start = datetime.strptime(self.args['start'], '%Y-%m-%d')
-            elif vrt == variant["V2"]:
+            elif vrt == variant['V2']:
                 end = datetime.strptime(self.args['end'], '%Y-%m-%d')
 
 
@@ -98,9 +102,7 @@ class DataCollector:
             self.__validate()
         except Exception as error:
             print('ERROR: ', error)
-        
 
-
-if __name__ == "__main__":
-    d = DataCollector(args={"period": "max"})
+if __name__ == '__main__':
+    d = DataCollector(args={"period": "max", 'interval':'1m'})
     d.run()
