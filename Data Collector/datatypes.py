@@ -8,7 +8,11 @@ variant: dict = {
 }
 
 ''' Default values '''
-default: dict = {'variant': variant['Invalid'], 'interval': '30m'}
+default: dict = {
+    'variant': variant['Invalid'],
+    'interval': '30m',
+    'round': 3,
+    }
 
 ''' Valid values '''
 valid: dict = {

@@ -1,6 +1,8 @@
 from datetime import datetime
 from dataclasses import dataclass, field
 from datatypes import variant, valid, default
+import yfinance as yf
+from pandas_datareader import data as pdr
 
 @dataclass(frozen=True,kw_only=True, slots=True)
 class DataCollector:
@@ -79,16 +81,33 @@ class DataCollector:
                 end = datetime.strptime(self.end, '%Y-%m-%d')
         return
 
+    def __gather(self) -> None:
+        ''' Download the data '''
+        yf.pdr_override()
+        
+        if self._variant == variant['V1']:
+            data = pdr.get_data_yahoo(tickers=self.ticker, start=self.start, period=self.period, interval=self.interval)
+        elif self._variant == variant['V2']:
+            data = pdr.get_data_yahoo(tickers=self.ticker, period=self.period, end=self.end, interval=self.interval)
+        elif self._variant == variant['V3']:
+            data = pdr.get_data_yahoo(tickers=self.ticker, period=self.period, interval=self.interval)
+        else:
+            data = pdr.get_data_yahoo(tickers=self.ticker, start=self.start, end=self.end, interval=self.interval)
+        if data.empty:
+            raise LookupError('Failed to download!')
+        else:
+            data = data.round(decimals=default['round']).to_numpy()
+        return
 
     def run(self) -> None:
         ''' Main '''
         try:
             self.__variant()
             self.__validate()
-        except (AssertionError,ValueError,IndexError) as error:
+            self.__gather()
+        except (AssertionError,ValueError,IndexError, LookupError) as error:
             print('ERROR: ', error)
-            return
-  
+            raise RuntimeError(error) from error
 
     def usage(self) -> None:
         ''' Usage '''
@@ -118,4 +137,4 @@ class DataCollector:
 
 if __name__ == '__main__':
     d = DataCollector(period='1d', ticker='GOOGL')
-    d.usage()
+    d.run()
