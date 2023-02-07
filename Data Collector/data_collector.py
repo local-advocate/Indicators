@@ -1,44 +1,17 @@
 from datetime import datetime
 from dataclasses import dataclass, field
+from datatypes import variant, valid, default
 
-# Input Argument for Data Collector Class
-dataCollectorArg: dict = {
-    "period": str,
-    "interval": str,
-    "ticker": str,
-    "start": str,
-    "end": str,
-}
-
-''' Variant values '''
-variant: dict = {
-    'V1': 'V1',
-    'V2': 'V2',
-    'V3': 'V3',
-    'V4': 'V4',
-    'Invalid': 'Invalid',
-}
-
-''' Default values '''
-default: dict = {'variant': variant['Invalid'], 'interval': '30m'}
-
-''' Valid values '''
-valid: dict = {
-    'period': ['1d','5d','1mo','3mo','6mo','1y','2y','5y','10y','ytd','max'],
-    'interval': ['1m','2m','5m','15m','30m','60m','90m','1h','1d','5d','1wk','1mo','3mo'],
-}
-
-''' Collects data within a given period and an interval of a given ticker. '''
 @dataclass(frozen=True,kw_only=True, slots=True)
 class DataCollector:
 
-    '''
-    Arguments:
-        start     :   start date, default today - interval
-        end      :   end date, default today
-        period   :   period till the current date
-        interval :   1M, 5M, 30M, 1H, 2H, 4H, 1D, 1W, 1M, 1Y
-        ticker   :   ticker of a company
+    ''' Collects data within a given period and an interval of a given ticker.
+        Arguments:
+            start     :   start date, default today - interval
+            end      :   end date, default today
+            period   :   period till the current date
+            interval :   1M, 5M, 30M, 1H, 2H, 4H, 1D, 1W, 1M, 1Y
+            ticker   :   ticker of a company
     '''
     start: str = ''
     end: str = ''
