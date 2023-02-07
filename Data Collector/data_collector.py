@@ -1,6 +1,5 @@
 from datetime import datetime
 from dataclasses import dataclass, field
-from multiprocessing import shared_memory
 from datatypes import variant, valid, default
 from pandas_datareader import data as pdr
 import yfinance as yf
@@ -21,12 +20,8 @@ class DataCollector:
     period: str = ''
     ticker: str
     interval: str = default['interval']                                                  # Default variant 3
-    _variant: str = field(init=False,repr=True,default=default['variant'])              # Default interval '30M'
+    _variant: str = field(init=False,repr=True,default=default['variant'])               # Default interval '30M'
     data: str = field(init=False, repr=False)
-
-    def __post_init__(self) -> None:
-        object.__setattr__(self, '_variant', self.__variant())                           # Set variant
-
 
     def __variant(self) -> str:
 
@@ -56,7 +51,6 @@ class DataCollector:
 
         return vrt
 
-
     def __validate(self) -> None:
 
         ''' Validate arguments (according to variants)'''
@@ -82,12 +76,12 @@ class DataCollector:
                 end = datetime.strptime(self.end, '%Y-%m-%d')
         return
 
-    def __gather(self) -> str:
+    def __gather(self) -> None:
         ''' Download the data '''
         yf.pdr_override()
-        
+
         if self._variant == variant['V1']:
-            self.data = pdr.get_data_yahoo(tickers=self.ticker, start=self.start, period=self.period, interval=self.interval)
+            pdr.get_data_yahoo(tickers=self.ticker, start=self.start, period=self.period, interval=self.interval)
         elif self._variant == variant['V2']:
             data = pdr.get_data_yahoo(tickers=self.ticker, period=self.period, end=self.end, interval=self.interval)
         elif self._variant == variant['V3']:
@@ -96,25 +90,20 @@ class DataCollector:
             data = pdr.get_data_yahoo(tickers=self.ticker, start=self.start, end=self.end, interval=self.interval)
         if data.empty:
             raise LookupError('Failed to download!')
-        
-        data = data.round(decimals=default['round']).to_numpy()
-        
-        # Add data to a new shared memory block
-        _name = 'Shared Block'
-        shm = shared_memory.SharedMemory(name=_name, create=True, size=data.nbytes)
-        return shm.name
 
-    def run(self) -> str:
+        data = data.round(decimals=default['round']).to_numpy()
+        object.__setattr__(self, 'data', data)                              # set data
+        return
+
+    def run(self) -> None:
         ''' Main '''
-        name = ''
         try:
-            self.__variant()
+            object.__setattr__(self, '_variant', self.__variant())
             self.__validate()
-            name = self.__gather()
-        except (AssertionError,ValueError,IndexError, LookupError) as error:
+            self.__gather()
+        except (AssertionError,ValueError,IndexError, LookupError, AttributeError) as error:
             raise RuntimeError(error) from error
-        else:
-            return name
+        return
 
     def usage(self) -> None:
         ''' Usage '''
@@ -141,7 +130,3 @@ class DataCollector:
         
         '''
         print(info)
-
-if __name__ == '__main__':
-    d = DataCollector(period='1d', ticker='GOOGL')
-    d.usage()
