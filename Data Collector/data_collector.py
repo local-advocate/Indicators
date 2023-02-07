@@ -1,8 +1,9 @@
 from datetime import datetime
 from dataclasses import dataclass, field
+from multiprocessing import shared_memory
 from datatypes import variant, valid, default
-import yfinance as yf
 from pandas_datareader import data as pdr
+import yfinance as yf
 
 @dataclass(frozen=True,kw_only=True, slots=True)
 class DataCollector:
@@ -21,7 +22,7 @@ class DataCollector:
     ticker: str
     interval: str = default['interval']                                                  # Default variant 3
     _variant: str = field(init=False,repr=True,default=default['variant'])              # Default interval '30M'
-
+    data: str = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
         object.__setattr__(self, '_variant', self.__variant())                           # Set variant
@@ -43,15 +44,15 @@ class DataCollector:
 
         if self.period:
             if self.start:
-                vrt += variant['V1']
+                vrt = variant['V1']
             elif self.end:
-                vrt += variant['V2']
+                vrt = variant['V2']
             else:
-                vrt += variant['V3']
+                vrt = variant['V3']
         elif self.start and self.end:
-            vrt += variant['V4']
+            vrt = variant['V4']
         else:
-            vrt += variant['Invalid']
+            vrt = variant['Invalid']
 
         return vrt
 
@@ -81,12 +82,12 @@ class DataCollector:
                 end = datetime.strptime(self.end, '%Y-%m-%d')
         return
 
-    def __gather(self) -> None:
+    def __gather(self) -> str:
         ''' Download the data '''
         yf.pdr_override()
         
         if self._variant == variant['V1']:
-            data = pdr.get_data_yahoo(tickers=self.ticker, start=self.start, period=self.period, interval=self.interval)
+            self.data = pdr.get_data_yahoo(tickers=self.ticker, start=self.start, period=self.period, interval=self.interval)
         elif self._variant == variant['V2']:
             data = pdr.get_data_yahoo(tickers=self.ticker, period=self.period, end=self.end, interval=self.interval)
         elif self._variant == variant['V3']:
@@ -95,23 +96,29 @@ class DataCollector:
             data = pdr.get_data_yahoo(tickers=self.ticker, start=self.start, end=self.end, interval=self.interval)
         if data.empty:
             raise LookupError('Failed to download!')
-        else:
-            data = data.round(decimals=default['round']).to_numpy()
-        return
+        
+        data = data.round(decimals=default['round']).to_numpy()
+        
+        # Add data to a new shared memory block
+        _name = 'Shared Block'
+        shm = shared_memory.SharedMemory(name=_name, create=True, size=data.nbytes)
+        return shm.name
 
-    def run(self) -> None:
+    def run(self) -> str:
         ''' Main '''
+        name = ''
         try:
             self.__variant()
             self.__validate()
-            self.__gather()
+            name = self.__gather()
         except (AssertionError,ValueError,IndexError, LookupError) as error:
-            print('ERROR: ', error)
             raise RuntimeError(error) from error
+        else:
+            return name
 
     def usage(self) -> None:
         ''' Usage '''
-        info = """
+        info = '''
                 Data Collector
         
         Collects the stock data of a given company (w/ a TCKR).
@@ -132,9 +139,9 @@ class DataCollector:
             V4  : Start and End provided.
             V5  : All other combinations are invalid.
         
-        """
+        '''
         print(info)
 
 if __name__ == '__main__':
     d = DataCollector(period='1d', ticker='GOOGL')
-    d.run()
+    d.usage()
