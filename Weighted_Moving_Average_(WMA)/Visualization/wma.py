@@ -72,59 +72,81 @@
 from datetime import datetime
 from dataclasses import dataclass, field
 from pandas_datareader import data as pdr
+from multiprocessing import shared_memory
+import numpy as np
 import yfinance as yf
 from Data_Collector.data_collector import DataCollector
 from Data_Collector import datatypes
 
-# @dataclass(frozen=True,kw_only=True, slots=True)
-# class WeightedMA:
 
-#     ''' Calculates weighted average a given frequency/period (20MA, 50MA, and so on).
-#         Arguments:
-#             period   :   calculates weighted moving average of last *period* data points
-#             data     :   array of data points (must use SharedMemory for efficiency)      *one can change it manually to use an array
-#     '''
-#     period: int = 20    # Default period 20                                                
-#     data: str = field(init=False, repr=False)
+@dataclass(frozen=True,kw_only=True, slots=True)
+class WeightedMA:
 
-#     def run(self) -> None:
-#         ''' Main '''
-#         try:
-#             object.__setattr__(self, '_variant', self.__variant())
-#             self.__validate()
-#             self.__gather()
-#         except (AssertionError,ValueError,IndexError, LookupError, AttributeError) as error:
-#             raise RuntimeError(error) from error
-#         return
+    ''' Calculates weighted average a given frequency/period (20MA, 50MA, and so on).
+        Arguments:
+            period   :   calculates weighted moving average of last *period* data points
+            data     :   array of data points (must use SharedMemory for efficiency)      *one can change it manually to use an array
+    '''
+    period: int = 20                      # Default period 20                                                
+    sharedName: str = field(repr=False)   # Name of the shared memory block
+    shape: int = field(repr=False)        # Shape of the data array
 
-#     def usage(self) -> None:
-#         ''' Usage '''
-#         info = '''
-#                 Data Collector
+    def run(self) -> None:
+        ''' Main '''
+        sharedMemBlock = shared_memory.SharedMemory(name=self.sharedName)
+        bufferArray = np.ndarray(shape=self.shape, buffer=sharedMemBlock.buf)
+        print(bufferArray)
         
-#         Collects the stock data of a given company (w/ a TCKR).
-#         Stores it in a share memory to be used by other processes.
-#         Use the run() method to run the whole program.
+        # try:
+        #     object.__setattr__(self, '_variant', self.__variant())
+        #     self.__validate()
+        #     self.__gather()
+        # except (AssertionError,ValueError,IndexError, LookupError, AttributeError) as error:
+        #     raise RuntimeError(error) from error
+        # return
+
+    # def usage(self) -> None:
+    #     ''' Usage '''
+    #     info = '''
+    #             Data Collector
         
-#         Arguments:
-#             1. Period       : '1d','5d','1mo','3mo','6mo','1y','2y','5y','10y','ytd','max'. 
-#             2. Interval     : '1m','2m','5m','15m','30m','60m','90m','1h','1d','5d','1wk','1mo','3mo'. Default: 30m.
-#             3. Start        :  yyyy-mm-dd.
-#             4. End          :  yyyy-mm-dd.
-#             5. Ticker*      :  TCKR of a company.
+    #     Collects the stock data of a given company (w/ a TCKR).
+    #     Stores it in a share memory to be used by other processes.
+    #     Use the run() method to run the whole program.
+        
+    #     Arguments:
+    #         1. Period       : '1d','5d','1mo','3mo','6mo','1y','2y','5y','10y','ytd','max'. 
+    #         2. Interval     : '1m','2m','5m','15m','30m','60m','90m','1h','1d','5d','1wk','1mo','3mo'. Default: 30m.
+    #         3. Start        :  yyyy-mm-dd.
+    #         4. End          :  yyyy-mm-dd.
+    #         5. Ticker*      :  TCKR of a company.
             
-#         Argument Preference/Variants (from most to least priority)
-#             V1  : Start and Period provided.
-#             V2  : Period and End provided.
-#             V3  : Only Period provided.
-#             V4  : Start and End provided.
-#             V5  : All other combinations are invalid.
+    #     Argument Preference/Variants (from most to least priority)
+    #         V1  : Start and Period provided.
+    #         V2  : Period and End provided.
+    #         V3  : Only Period provided.
+    #         V4  : Start and End provided.
+    #         V5  : All other combinations are invalid.
         
-#         '''
-#         print(info)
+    #     '''
+    #     print(info)
 
 if __name__ == '__main__':
-  print('bruh')
+  # Collect data
   d = DataCollector(period='1d', ticker='AMZN')
   d.run()
-  print(d.data[:, 1])
+
+  # Run on the 'Open' column/Open prices (change it to arg later)
+  data = d.data[:,datatypes.column['Open']]
+  
+  # Create a shared memory block and store the data
+  sharedName = 'WMASharedBlock'
+  sharedBlock = shared_memory.SharedMemory(name=sharedName, create=True, size=data.nbytes)
+  sharedData = np.ndarray(data.shape, buffer=sharedBlock.buf)
+  sharedData[:] = data[:]
+  
+  # Run shared memory & Graph
+  wma = WeightedMA(shape=data.shape,sharedName=sharedName)
+  wma.run()
+  
+  # print(sharedBlock.buf.shape)
