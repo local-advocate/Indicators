@@ -91,6 +91,8 @@ class DataCollector:
         if data.empty:
             raise LookupError('Failed to download!')
 
+        data.reset_index(inplace=True)
+        # data['Datetime'] = data['Datetime'].dt.date
         data = data.round(decimals=default['round']).to_numpy()
         object.__setattr__(self, 'data', data)                              # set data
         return
