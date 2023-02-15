@@ -12,7 +12,8 @@ default: dict = {
     'variant': variant['Invalid'],
     'interval': '30m',
     'round': 3,
-    'column': 'Open'
+    'column': 'Open',
+    'frequency': 5,
 }
 
 ''' Valid values '''
