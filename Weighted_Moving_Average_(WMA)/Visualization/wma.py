@@ -76,7 +76,7 @@ from multiprocessing import shared_memory
 import numpy as np
 import yfinance as yf
 from Data_Collector.data_collector import DataCollector
-from Data_Collector import datatypes
+from Data_Collector.datatypes import column, default, valid
 
 
 @dataclass(frozen=True,kw_only=True, slots=True)
@@ -87,23 +87,48 @@ class WeightedMA:
             period   :   calculates weighted moving average of last *period* data points
             data     :   array of data points (must use SharedMemory for efficiency)      *one can change it manually to use an array
     '''
-    period: int = 20                      # Default period 20                                                
-    sharedName: str = field(repr=False)   # Name of the shared memory block
-    shape: int = field(repr=False)        # Shape of the data array
+    start: str = ''
+    end: str = ''
+    period: str = ''
+    ticker: str
+    interval: str = default['interval']                                                  # Default variant 3
+    frequency: int                                                                       # Last *frequency* points moving average
+    column: str = default['column']                                                      # Default column Open
+    
+    
+    def __validate(self) -> None:
 
+        ''' Validate arguments'''
+
+        # Valid interval
+        if self.frequency < 1:
+            raise AssertionError('Invalid frequecy. Frequency must be >= 1.')
+        if self.column not in valid['column']:
+            raise AssertionError('Invalid interval. Valid intervals include: ', valid['column'])
+
+        # All other arguments checked by Data Collector
+        return
+
+    
     def run(self) -> None:
         ''' Main '''
-        sharedMemBlock = shared_memory.SharedMemory(name=self.sharedName)
-        bufferArray = np.ndarray(shape=self.shape, buffer=sharedMemBlock.buf)
-        print(bufferArray)
-        
-        # try:
-        #     object.__setattr__(self, '_variant', self.__variant())
-        #     self.__validate()
-        #     self.__gather()
-        # except (AssertionError,ValueError,IndexError, LookupError, AttributeError) as error:
-        #     raise RuntimeError(error) from error
-        # return
+        try:
+          # Validate args
+          self.__validate()
+          
+          # Collect data
+          d = DataCollector(period=self.period, ticker=self.ticker
+                            , start=self.start, end=self.end, interval=self.interval)
+          d.run()
+
+          # Run on the 'Open' column/Open prices (change it to arg later)
+          data = d.data[:,column[self.column]]
+          print(data)
+          
+        except (AssertionError,ValueError,IndexError, LookupError, AttributeError) as error:
+            raise RuntimeError(error) from error
+        return
+      
 
     # def usage(self) -> None:
     #     ''' Usage '''
@@ -132,21 +157,9 @@ class WeightedMA:
     #     print(info)
 
 if __name__ == '__main__':
-  # Collect data
-  d = DataCollector(period='1d', ticker='AMZN')
-  d.run()
-
-  # Run on the 'Open' column/Open prices (change it to arg later)
-  data = d.data[:,datatypes.column['Open']]
-  
-  # Create a shared memory block and store the data
-  sharedName = 'WMASharedBlock'
-  sharedBlock = shared_memory.SharedMemory(name=sharedName, create=True, size=data.nbytes)
-  sharedData = np.ndarray(data.shape, buffer=sharedBlock.buf)
-  sharedData[:] = data[:]
   
   # Run shared memory & Graph
-  wma = WeightedMA(shape=data.shape,sharedName=sharedName)
+  wma = WeightedMA(period='1d', ticker='AMZN', frequency=1)
   wma.run()
   
   # print(sharedBlock.buf.shape)
