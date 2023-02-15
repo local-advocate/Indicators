@@ -186,9 +186,16 @@ class WeightedMA:
     def __graph(self)  -> None:
       ''' Graph (does not show, just plots, call show explicitly) '''
       # Green if closes higher than opens
+      plt.style.use('dark_background')
       color = 'g' if self.data[-1] > self.data[0] else 'r'
-      plt.plot(self.data, color=color)
-      plt.plot(self.averageArray, color='c', ls='dashed')
+      plt.plot(self.data, color=color, label='Price')
+      plt.plot(self.averageArray, color='c', ls='dashed', label='MA (%s)'%self.frequency)
+      
+      plt.title('Weighted Moving Average')
+      plt.xlabel('Datetime')
+      plt.ylabel('Price ($)')
+      plt.legend(loc='upper right')
+      
       return
     
     def run(self) -> None:
@@ -211,35 +218,30 @@ class WeightedMA:
         return
       
 
-    # def usage(self) -> None:
-    #     ''' Usage '''
-    #     info = '''
-    #             Data Collector
+    def usage(self) -> None:
+        ''' Usage '''
+        info = '''
+                Weighted Moving Average (WMA)
         
-    #     Collects the stock data of a given company (w/ a TCKR).
-    #     Stores it in a share memory to be used by other processes.
-    #     Use the run() method to run the whole program.
+        Calculates the Weighted Moving Average of a stream w/ given frequency.
+        Use the run() method to run the whole program.
         
-    #     Arguments:
-    #         1. Period       : '1d','5d','1mo','3mo','6mo','1y','2y','5y','10y','ytd','max'. 
-    #         2. Interval     : '1m','2m','5m','15m','30m','60m','90m','1h','1d','5d','1wk','1mo','3mo'. Default: 30m.
-    #         3. Start        :  yyyy-mm-dd.
-    #         4. End          :  yyyy-mm-dd.
-    #         5. Ticker*      :  TCKR of a company.
-            
-    #     Argument Preference/Variants (from most to least priority)
-    #         V1  : Start and Period provided.
-    #         V2  : Period and End provided.
-    #         V3  : Only Period provided.
-    #         V4  : Start and End provided.
-    #         V5  : All other combinations are invalid.
+        Arguments:
+            1. Period       : '1d','5d','1mo','3mo','6mo','1y','2y','5y','10y','ytd','max'. 
+            2. Interval     : '1m','2m','5m','15m','30m','60m','90m','1h','1d','5d','1wk','1mo','3mo'. Default: 30m.
+            3. Start        :  yyyy-mm-dd.
+            4. End          :  yyyy-mm-dd.
+            5. Ticker*      :  TCKR of a company.
+            6. Frequency    :  Moving average of latest *frequency* data points. Default: 5.
+            7. Column       :  'Open', 'High', 'Low', 'Close', 'Adj Close', 'Volume'. Default: Open.
+            8. Graph        :  Graph the results or not. Default: False. Call show() explicitly to show plot if graphing.
         
-    #     '''
-    #     print(info)
+        '''
+        print(info)
 
 if __name__ == '__main__':
   
   # Run shared memory & Graph
-  wma = WeightedMA(period='1mo', ticker='AMZN', frequency=1, graph=True)
+  wma = WeightedMA(period='1mo', ticker='AMZN', frequency=10, graph=True)
   wma.run()
   plt.show()
