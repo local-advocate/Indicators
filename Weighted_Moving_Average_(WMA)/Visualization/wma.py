@@ -69,14 +69,11 @@
 # plt.plot(averageArr)
 # plt.show()
 
-from datetime import datetime
 from dataclasses import dataclass, field
-from pandas_datareader import data as pdr
-from multiprocessing import shared_memory
-import numpy as np
-import yfinance as yf
+from numpy import zeros as npZeros, subtract as npSubtract
 from Data_Collector.data_collector import DataCollector
 from Data_Collector.datatypes import column, default, valid
+import matplotlib.pyplot as plt
 
 
 @dataclass(frozen=True,kw_only=True, slots=True)
@@ -95,6 +92,8 @@ class WeightedMA:
     frequency: int = default['frequency']                                                # Last *frequency* points moving average. Default 5.
     column: str = default['column']                                                      # Default column Open
     data: str = field(init=False, repr=False)
+    averageArray: str = field(init=False, repr=False)
+    graph: bool = False                                                                  # Graph the results. Default: False.
     
     def __validate(self) -> None:
 
@@ -124,6 +123,73 @@ class WeightedMA:
             raise LookupError(error) from error
         return
 
+    def __algo(self) -> None:
+      ''' WMA Algorithm '''
+      length = len(self.data)
+      frequency = min(self.frequency, length)
+
+      # used for updating weighted array
+      originalArr = npZeros((frequency,))
+      originalArr[0] = self.data[0]
+      orignial_sum = originalArr[0]
+
+      # weighted array of *period* period
+      weightedArr = npZeros((frequency,))
+      weightedArr[0] = self.data[0]*frequency
+      weighted_sum = weightedArr[0]
+
+      # weighted average
+      weightedAvg = self.data[0]
+      averageArr = npZeros((length,))
+      averageArr[0] = weightedAvg
+
+      # initalization 
+      i = 1
+      denominator = frequency
+      while i < frequency:
+        weightedArr = npSubtract(weightedArr, originalArr)                 # decrease older values
+        
+        value, weightedValue = self.data[i], self.data[i] * frequency
+        originalArr[i] = value
+        weightedArr[i] = weightedValue                                      # replace oldest value with the newest (most weighted)
+        
+        weighted_sum = weighted_sum - orignial_sum + weightedValue          # for average calculations
+        orignial_sum += value
+        
+        denominator += (frequency - i)                                      # denominator changes (increases)
+        weightedAvg = weighted_sum / denominator
+        averageArr[i] = weightedAvg
+        
+        i += 1
+
+      # rest of the process (quite similar w subtle changes)
+      denominator = int((frequency * (frequency+1))/2)                      # if period=5, denominator = 1+2+3+4+5 (weighted)
+      while (i < length):
+        weightedArr = npSubtract(weightedArr, originalArr)                 
+        
+        value, weightedValue = self.data[i], self.data[i] * frequency
+        
+        weighted_sum = weighted_sum - orignial_sum + weightedValue        
+        orignial_sum = orignial_sum - originalArr[i%frequency] + value       # remove the old value from the original sum
+        
+        originalArr[i%frequency] = value                                     # replace the to be removed value w new one
+        weightedArr[i%frequency] = weightedValue                                
+        
+        weightedAvg = weighted_sum / denominator
+        averageArr[i] = weightedAvg
+        
+        i += 1
+        
+      object.__setattr__(self, 'averageArray', averageArr)                # set avgArray, not copied
+      return
+
+    def __graph(self)  -> None:
+      ''' Graph (does not show, just plots, call show explicitly) '''
+      # Green if closes higher than opens
+      color = 'g' if self.data[-1] > self.data[0] else 'r'
+      plt.plot(self.data, color=color)
+      plt.plot(self.averageArray, color='c', ls='dashed')
+      return
     
     def run(self) -> None:
         ''' Main '''
@@ -135,7 +201,11 @@ class WeightedMA:
           self.__gather()
           
           # Run algo 
-                    
+          self.__algo() 
+          
+          # Graph
+          if (self.graph):  self.__graph()
+                  
         except (AssertionError,ValueError,IndexError, LookupError, AttributeError) as error:
             raise RuntimeError(error) from error
         return
@@ -170,7 +240,6 @@ class WeightedMA:
 if __name__ == '__main__':
   
   # Run shared memory & Graph
-  wma = WeightedMA(period='1d', ticker='AMZN')
+  wma = WeightedMA(period='1mo', ticker='AMZN', frequency=1, graph=True)
   wma.run()
-  
-  # print(sharedBlock.buf.shape)
+  plt.show()
