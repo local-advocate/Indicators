@@ -92,9 +92,9 @@ class WeightedMA:
     period: str = ''
     ticker: str
     interval: str = default['interval']                                                  # Default variant 3
-    frequency: int                                                                       # Last *frequency* points moving average
+    frequency: int = default['frequency']                                                # Last *frequency* points moving average. Default 5.
     column: str = default['column']                                                      # Default column Open
-    
+    data: str = field(init=False, repr=False)
     
     def __validate(self) -> None:
 
@@ -108,6 +108,21 @@ class WeightedMA:
 
         # All other arguments checked by Data Collector
         return
+      
+    def __gather(self) -> None:
+        ''' Download the data '''
+        try:
+          # Collect data
+          d = DataCollector(period=self.period, ticker=self.ticker
+                            , start=self.start, end=self.end, interval=self.interval)
+          d.run()
+
+          # Run on the column
+          data = d.data[:,column[self.column]]
+          object.__setattr__(self, 'data', data)                              # set data, not copied
+        except LookupError as error:
+            raise LookupError(error) from error
+        return
 
     
     def run(self) -> None:
@@ -117,14 +132,10 @@ class WeightedMA:
           self.__validate()
           
           # Collect data
-          d = DataCollector(period=self.period, ticker=self.ticker
-                            , start=self.start, end=self.end, interval=self.interval)
-          d.run()
-
-          # Run on the 'Open' column/Open prices (change it to arg later)
-          data = d.data[:,column[self.column]]
-          print(data)
+          self.__gather()
           
+          # Run algo 
+                    
         except (AssertionError,ValueError,IndexError, LookupError, AttributeError) as error:
             raise RuntimeError(error) from error
         return
@@ -159,7 +170,7 @@ class WeightedMA:
 if __name__ == '__main__':
   
   # Run shared memory & Graph
-  wma = WeightedMA(period='1d', ticker='AMZN', frequency=1)
+  wma = WeightedMA(period='1d', ticker='AMZN')
   wma.run()
   
   # print(sharedBlock.buf.shape)
