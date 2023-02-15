@@ -1,8 +1,8 @@
 from datetime import datetime
 from dataclasses import dataclass, field
-from Data_Collector.datatypes import variant, valid, default
 from pandas_datareader import data as pdr
 import yfinance as yf
+from DataCollector.datatypes import variant, valid, default
 
 @dataclass(frozen=True,kw_only=True, slots=True)
 class DataCollector:

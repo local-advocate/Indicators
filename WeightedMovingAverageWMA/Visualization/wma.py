@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 from numpy import zeros as npZeros, subtract as npSubtract
-from Data_Collector.data_collector import DataCollector
-from Data_Collector.datatypes import column, default, valid
 from matplotlib.pyplot import style as pltStyle, plot as pltPlot, title as pltTitle, xlabel as pltXlabel, ylabel as pltYlabel, legend as pltLegend, show as pltShow
+from DataCollector.data_collector import DataCollector
+from DataCollector.datatypes import column, default, valid
 
 @dataclass(frozen=True,kw_only=True, slots=True)
 class WeightedMA:
@@ -139,12 +139,13 @@ class WeightedMA:
           self.__algo() 
           
           # Graph
-          if (self.graph):  self.__graph()
-                  
+          if self.graph:
+            self.__graph()
+
         except (AssertionError,ValueError,IndexError, LookupError, AttributeError) as error:
             raise RuntimeError(error) from error
         return
-      
+
     def usage(self) -> None:
         ''' Usage '''
         info = '''
