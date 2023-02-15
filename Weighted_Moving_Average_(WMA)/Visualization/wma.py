@@ -1,80 +1,8 @@
-# import numpy as np
-# import matplotlib.pyplot as plt
-# # data = np.random.randint(low=0, high=13, size=(10,))
-
-# data = [100, 102, 103, 101, 104, 105, 106, 99, 98, 97, 91, 90, 89, 90, 92, 94, 99, 101]
-# length = len(data)
-# period = min(5, length)
-
-# # used for updating weighted array
-# originalArr = np.zeros((period,))
-# originalArr[0] = data[0]
-# orignial_sum = originalArr[0]
-
-# # weighted array of *period* period
-# weightedArr = np.zeros((period,))
-# weightedArr[0] = data[0]*period
-# weighted_sum = weightedArr[0]
-
-# # weighted average
-# weightedAvg = data[0]
-# averageArr = np.zeros((length,))
-# averageArr[0] = weightedAvg
-
-# # initalization 
-# i = 1
-# denominator = period
-# while i < period:
-#   weightedArr = np.subtract(weightedArr, originalArr)                 # decrease older values
-  
-#   value, weightedValue = data[i], data[i] * period
-#   originalArr[i] = value
-#   weightedArr[i] = weightedValue                                      # replace oldest value with the newest (most weighted)
-  
-#   weighted_sum = weighted_sum - orignial_sum + weightedValue          # for average calculations
-#   orignial_sum += value
-  
-#   denominator += (period - i)                                         # only difference between initialization and rest of the process (denominator changes)
-#   weightedAvg = weighted_sum / denominator
-#   averageArr[i] = weightedAvg
-  
-#   i += 1
-
-# # rest of the process (quite similar w subtle changes)
-# denominator = int((period * (period+1))/2)                             # if period=5, denominator = 1+2+3+4+5 (weighted)
-# while (i < length):
-#   weightedArr = np.subtract(weightedArr, originalArr)                 
-  
-#   value, weightedValue = data[i], data[i] * period
-  
-#   weighted_sum = weighted_sum - orignial_sum + weightedValue        
-#   orignial_sum = orignial_sum - originalArr[i%period] + value          # remove the old value from the original sum
-  
-#   originalArr[i%period] = value                                        # replace the to be removed value w new one
-#   weightedArr[i%period] = weightedValue                                
-  
-#   weightedAvg = weighted_sum / denominator
-#   averageArr[i] = weightedAvg
-  
-#   i += 1
-
-# print('original arr: ', originalArr)
-# print('original sum: ', orignial_sum)
-# print('weighted arr: ', weightedArr)
-# print('weighted sum: ', weighted_sum)
-# print('average arr : ', averageArr)
-# # print('weightedAvg : ', weightedAvg)
-
-# plt.plot(data)
-# plt.plot(averageArr)
-# plt.show()
-
 from dataclasses import dataclass, field
 from numpy import zeros as npZeros, subtract as npSubtract
 from Data_Collector.data_collector import DataCollector
 from Data_Collector.datatypes import column, default, valid
-import matplotlib.pyplot as plt
-
+from matplotlib.pyplot import style as pltStyle, plot as pltPlot, title as pltTitle, xlabel as pltXlabel, ylabel as pltYlabel, legend as pltLegend, show as pltShow
 
 @dataclass(frozen=True,kw_only=True, slots=True)
 class WeightedMA:
@@ -164,7 +92,7 @@ class WeightedMA:
 
       # rest of the process (quite similar w subtle changes)
       denominator = int((frequency * (frequency+1))/2)                      # if period=5, denominator = 1+2+3+4+5 (weighted)
-      while (i < length):
+      while i < length:
         weightedArr = npSubtract(weightedArr, originalArr)                 
         
         value, weightedValue = self.data[i], self.data[i] * frequency
@@ -186,15 +114,15 @@ class WeightedMA:
     def __graph(self)  -> None:
       ''' Graph (does not show, just plots, call show explicitly) '''
       # Green if closes higher than opens
-      plt.style.use('dark_background')
+      pltStyle.use('dark_background')
       color = 'g' if self.data[-1] > self.data[0] else 'r'
-      plt.plot(self.data, color=color, label='Price')
-      plt.plot(self.averageArray, color='c', ls='dashed', label='MA (%s)'%self.frequency)
+      pltPlot(self.data, color=color, label='%s'%self.ticker)
+      pltPlot(self.averageArray, color='c', ls='dashed', label='MA (%s)'%self.frequency)
       
-      plt.title('Weighted Moving Average')
-      plt.xlabel('Datetime')
-      plt.ylabel('Price ($)')
-      plt.legend(loc='upper right')
+      pltTitle('Weighted Moving Average')
+      pltXlabel('Datetime')
+      pltYlabel('Price ($)')
+      pltLegend(loc='upper right')
       
       return
     
@@ -217,7 +145,6 @@ class WeightedMA:
             raise RuntimeError(error) from error
         return
       
-
     def usage(self) -> None:
         ''' Usage '''
         info = '''
@@ -238,10 +165,3 @@ class WeightedMA:
         
         '''
         print(info)
-
-if __name__ == '__main__':
-  
-  # Run shared memory & Graph
-  wma = WeightedMA(period='1mo', ticker='AMZN', frequency=10, graph=True)
-  wma.run()
-  plt.show()
