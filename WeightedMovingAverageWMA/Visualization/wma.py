@@ -166,3 +166,8 @@ class WeightedMA:
         
         '''
         print(info)
+
+if __name__ == '__main__':
+  ewma = WeightedMA(ticker='AMZN', period='1mo', interval='15m', frequency=26, graph=True)
+  ewma.run()
+  pltShow()

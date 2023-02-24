@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from numpy import zeros as npZeros, subtract as npSubtract
 from matplotlib.pyplot import style as pltStyle, plot as pltPlot, title as pltTitle, xlabel as pltXlabel, ylabel as pltYlabel, legend as pltLegend, show as pltShow
+from discountAverage import DiscountedAveragerator
 from DataCollector.data_collector import DataCollector
 from DataCollector.datatypes import column, default, valid
 
@@ -17,10 +18,9 @@ class ExponetialWMA:
     period: str = ''
     ticker: str
     interval: str = default['interval']                                                  # Default variant 3
-    frequency: int = default['frequency']                                                # Last *frequency* points moving average. Default 5.
     column: str = default['column']                                                      # Default column Open
     data: str = field(init=False, repr=False)
-    _alpha: int = field(init=False, repr=False)
+    alpha: int = default['alpha']                                                        # Default value 0.8
     averageArray: str = field(init=False, repr=False)
     graph: bool = False                                                                  # Graph the results. Default: False.
     
@@ -29,8 +29,8 @@ class ExponetialWMA:
         ''' Validate arguments'''
 
         # Valid interval
-        if self.frequency < 1:
-            raise AssertionError('Invalid frequecy. Frequency must be >= 1.')
+        if not 0 <= self.alpha <= 1:
+            raise AssertionError('Invalid alpha. ALpha must be between 0 and 1.')
         if self.column not in valid['column']:
             raise AssertionError('Invalid interval. Valid intervals include: ', valid['column'])
 
@@ -55,60 +55,19 @@ class ExponetialWMA:
     def __algo(self) -> None:
       ''' EWMA Algorithm '''
       length = len(self.data)
-      frequency = min(self.frequency, length)
-
-      # used for updating weighted array
-      originalArr = npZeros((frequency,))
-      originalArr[0] = self.data[0]
-      orignial_sum = originalArr[0]
-
-      # weighted array of *period* period
-      weightedArr = npZeros((frequency,))
-      weightedArr[0] = self.data[0]*frequency
-      weighted_sum = weightedArr[0]
-
-      # weighted average
-      weightedAvg = self.data[0]
+      
       averageArr = npZeros((length,))
-      averageArr[0] = weightedAvg
+      averageArr[0] = self.data[0]
 
-      # initalization 
+      averagerator = DiscountedAveragerator(alpha=self.alpha)
+      
       i = 1
-      denominator = frequency
-      while i < frequency:
-        weightedArr = npSubtract(weightedArr, originalArr)                 # decrease older values
-        
-        value, weightedValue = self.data[i], self.data[i] * frequency
-        originalArr[i] = value
-        weightedArr[i] = weightedValue                                      # replace oldest value with the newest (most weighted)
-        
-        weighted_sum = weighted_sum - orignial_sum + weightedValue          # for average calculations
-        orignial_sum += value
-        
-        denominator += (frequency - i)                                      # denominator changes (increases)
-        weightedAvg = weighted_sum / denominator
-        averageArr[i] = weightedAvg
-        
+      while (i < length):
+        curr = self.data[i]
+        averagerator.add(curr)
+        averageArr[i] = averagerator.avg
         i += 1
-
-      # rest of the process (quite similar w subtle changes)
-      denominator = int((frequency * (frequency+1))/2)                      # if period=5, denominator = 1+2+3+4+5 (weighted)
-      while i < length:
-        weightedArr = npSubtract(weightedArr, originalArr)                 
-        
-        value, weightedValue = self.data[i], self.data[i] * frequency
-        
-        weighted_sum = weighted_sum - orignial_sum + weightedValue        
-        orignial_sum = orignial_sum - originalArr[i%frequency] + value       # remove the old value from the original sum
-        
-        originalArr[i%frequency] = value                                     # replace the to be removed value w new one
-        weightedArr[i%frequency] = weightedValue                                
-        
-        weightedAvg = weighted_sum / denominator
-        averageArr[i] = weightedAvg
-        
-        i += 1
-        
+      
       object.__setattr__(self, 'averageArray', averageArr)                # set avgArray, not copied
       return
 
@@ -118,9 +77,9 @@ class ExponetialWMA:
       pltStyle.use('dark_background')
       color = 'g' if self.data[-1] > self.data[0] else 'r'
       pltPlot(self.data, color=color, label='%s'%self.ticker)
-      pltPlot(self.averageArray, color='c', ls='dashed', label='MA (%s)'%self.frequency)
+      pltPlot(self.averageArray, color='c', ls='dashed', label='EMA (%s)'%self.alpha)
       
-      pltTitle('Weighted Moving Average')
+      pltTitle('Exponential Weighted Moving Average')
       pltXlabel('Datetime')
       pltYlabel('Price ($)')
       pltLegend(loc='upper right')
@@ -152,8 +111,10 @@ class ExponetialWMA:
         info = '''
                 Exponential Weighted Moving Average (EWMA)
         
-        Calculates the Weighted Moving Average of a stream w/ given frequency.
+        Calculates the Exponential Weighted Moving Average of a stream w/ given alpha.
         Use the run() method to run the whole program.
+        
+        Use for short term averages only.
         
         Arguments:
             1. Period       : '1d','5d','1mo','3mo','6mo','1y','2y','5y','10y','ytd','max'. 
@@ -161,7 +122,7 @@ class ExponetialWMA:
             3. Start        :  yyyy-mm-dd.
             4. End          :  yyyy-mm-dd.
             5. Ticker*      :  TCKR of a company.
-            6. Frequency    :  Moving average of latest *frequency* data points. Default: 5.
+            6. Alpha        :  [0, 1]. Lower the alpha, less weight to previous values. Ex: 20day alpha: 0.4, 200day alpha: 0.9.
             7. Column       :  'Open', 'High', 'Low', 'Close', 'Adj Close', 'Volume'. Default: Open.
             8. Graph        :  Graph the results or not. Default: False. Call show() explicitly to show plot if graphing.
         
@@ -169,6 +130,6 @@ class ExponetialWMA:
         print(info)
 
 if __name__ == '__main__':
-  ewma = ExponetialWMA(ticker='AMZN', period='5d', frequency=2, graph=True)
+  ewma = ExponetialWMA(ticker='AMZN', period='1mo', interval='15m', alpha=0.5, graph=True)
   ewma.run()
   pltShow()
