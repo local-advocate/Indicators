@@ -18,6 +18,11 @@ Implementation, visualization, back-testing, and real-time integration of indica
 
 * The algorithms are integrated into a real-time broker platform using their API (either simulation or actual account).
 
+## Indicators Implemented
+* Weighted Moving Average (WMA)
+* Exponential Weighted Moving Average (EWMA)
+* Relative Strength Index (RSI)
+
 ## Additional Info
 
 Each sub-folder includes a *README* file that explains in great detail the inner workings of that indicator.
