@@ -128,8 +128,3 @@ class ExponetialWMA:
         
         '''
         print(info)
-
-if __name__ == '__main__':
-  ewma = ExponetialWMA(ticker='AMZN', period='1mo', interval='15m', alpha=0.5, graph=True)
-  ewma.run()
-  pltShow()
