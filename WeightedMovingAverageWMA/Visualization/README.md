@@ -34,27 +34,27 @@ A *RunTime Exception* is raise in case of invalid parameters, failed download, o
 ## Visualizations
 * Frequency: 1.  
     <p align='center'>
-      <img alt='MA 1' src='https://github.com/local-advocate/Indicators/blob/main/Weighted_Moving_Average_(WMA)/Visualization/Images/Frequency%201.png' />
+      <img alt='MA 1' src='https://github.com/NP1Traders/Indicators/blob/main/WeightedMovingAverageWMA/Visualization/Images/Frequency%201.png' />
     </p>
   
 * Frequency: 10.  
     <p align='center'>
-      <img alt='MA 10' src='https://github.com/local-advocate/Indicators/blob/main/Weighted_Moving_Average_(WMA)/Visualization/Images/Frequency%2010.png' />
+      <img alt='MA 10' src='https://github.com/NP1Traders/Indicators/blob/main/WeightedMovingAverageWMA/Visualization/Images/Frequency%2010.png' />
     </p> 
 
 * Frequency: 20.  
     <p align='center'>
-      <img alt='MA 20' src='https://github.com/local-advocate/Indicators/blob/main/Weighted_Moving_Average_(WMA)/Visualization/Images/Frequency%2020.png' />
+      <img alt='MA 20' src='https://github.com/NP1Traders/Indicators/blob/main/WeightedMovingAverageWMA/Visualization/Images/Frequency%2020.png' />
     </p> 
 
 * Frequency: 50.  
     <p align='center'>
-      <img alt='MA 50' src='https://github.com/local-advocate/Indicators/blob/main/Weighted_Moving_Average_(WMA)/Visualization/Images/Frequency%2050.png' />
+      <img alt='MA 50' src='https://github.com/NP1Traders/Indicators/blob/main/WeightedMovingAverageWMA/Visualization/Images/Frequency%2050.png' />
     </p> 
 
 * Frequency: 100.  
     <p align='center'>
-      <img alt='MA 100' src='https://github.com/local-advocate/Indicators/blob/main/Weighted_Moving_Average_(WMA)/Visualization/Images/Frequency%20100.png' />
+      <img alt='MA 100' src='https://github.com/NP1Traders/Indicators/blob/main/WeightedMovingAverageWMA/Visualization/Images/Frequency%20100.png' />
     </p>
 
 
