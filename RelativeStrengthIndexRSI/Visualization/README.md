@@ -24,7 +24,7 @@ python rsi.py
 *RSI* class is meant to be imported. Therefore, it does not take any command line arguments. Initialize it with proper parameters and call the *run* method to run all the steps. If executes successfully, then the values will be stored inside the *rsiArray* class member.  
 
 ```python
-# EXAMPLE
+# EXAMPLE (Used for visualizations below)
 rsi = RSI(ticker='AMZN', period='1mo', interval='30m', timeperiod=14, graph=True)
 rsi.run()
 plt.show()
