@@ -51,63 +51,50 @@ class RSI:
         return
 
     def __algo(self) -> None:
-      ''' WMA Algorithm '''
+      ''' RSI Algorithm '''
       length = len(self.data)
-      frequency = min(self.frequency, length)
+      timeperiod = min(self.timeperiod, length)
 
-      # used for updating weighted array
-      originalArr = npZeros((frequency,))
-      originalArr[0] = self.data[0]
-      orignial_sum = originalArr[0]
-
-      # weighted array of *period* period
-      weightedArr = npZeros((frequency,))
-      weightedArr[0] = self.data[0]*frequency
-      weighted_sum = weightedArr[0]
-
-      # weighted average
-      weightedAvg = self.data[0]
-      averageArr = npZeros((length,))
-      averageArr[0] = weightedAvg
-
-      # initalization 
+      rsiArr = npZeros((length,))
+      
+      lastValue = self.data[0]
+      change = 0
+      curr = self.data[0]
+      up, down = 0, 0             # values to add in up average or down average
+      rs = 0
+      rsi = 0
+      
+      # averagerators
+      upAvg = WilderSmoothing(timeperiod=timeperiod)
+      downAvg = WilderSmoothing(timeperiod=timeperiod)
+      
       i = 1
-      denominator = frequency
-      while i < frequency:
-        weightedArr = npSubtract(weightedArr, originalArr)                 # decrease older values
-        
-        value, weightedValue = self.data[i], self.data[i] * frequency
-        originalArr[i] = value
-        weightedArr[i] = weightedValue                                      # replace oldest value with the newest (most weighted)
-        
-        weighted_sum = weighted_sum - orignial_sum + weightedValue          # for average calculations
-        orignial_sum += value
-        
-        denominator += (frequency - i)                                      # denominator changes (increases)
-        weightedAvg = weighted_sum / denominator
-        averageArr[i] = weightedAvg
-        
-        i += 1
-
-      # rest of the process (quite similar w subtle changes)
-      denominator = int((frequency * (frequency+1))/2)                      # if period=5, denominator = 1+2+3+4+5 (weighted)
       while i < length:
-        weightedArr = npSubtract(weightedArr, originalArr)                 
+        curr = self.data[i]
+        change = curr - lastValue
+        lastValue = curr
         
-        value, weightedValue = self.data[i], self.data[i] * frequency
+        # price decrease
+        if change < 0:
+          up = 0
+          down = abs(change)
+        else:
+          up = change
+          down = 0
         
-        weighted_sum = weighted_sum - orignial_sum + weightedValue        
-        orignial_sum = orignial_sum - originalArr[i%frequency] + value       # remove the old value from the original sum
+        # update averages
+        upAvg.add(up)
+        downAvg.add(down)
         
-        originalArr[i%frequency] = value                                     # replace the to be removed value w new one
-        weightedArr[i%frequency] = weightedValue                                
+        # calculate Relative Strength (RS)
+        rs = upAvg.avg / downAvg.avg
         
-        weightedAvg = weighted_sum / denominator
-        averageArr[i] = weightedAvg
-        
-        i += 1
-        
-      object.__setattr__(self, 'averageArray', averageArr)                # set avgArray, not copied
+        # calulcate RSI
+        rsi = 100 - (100/(1+rs))
+        rsiArr[i] = rsi
+
+
+      object.__setattr__(self, 'rsiArray', rsiArr)                # set avgArray, not copied
       return
 
     def __graph(self)  -> None:
