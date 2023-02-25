@@ -23,10 +23,10 @@ python wma.py
 *WeightedMA* class is meant to be imported. Therefore, it does not take any command line arguments. Initialize it with proper parameters and call the *run* method to run all the steps. If executes successfully, then the averages will be stored inside the *averageArray* class member.  
 
 ```python
-   # EXAMPLE
-   wma = WeightedMA(period='1mo', ticker='AMZN', frequency=10, graph=True)
-   wma.run()
-   plt.show()
+# EXAMPLE (Used for Visualizations below)
+wma = WeightedMA(period='1mo', ticker='AMZN', frequency=10, graph=True)
+wma.run()
+plt.show()
 ```
 
 A *RunTime Exception* is raise in case of invalid parameters, failed download, or any unexpected error.
