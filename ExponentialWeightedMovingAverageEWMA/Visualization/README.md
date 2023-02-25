@@ -23,10 +23,10 @@ python ewma.py
 *ExponentialWMA* class is meant to be imported. Therefore, it does not take any command line arguments. Initialize it with proper parameters and call the *run* method to run all the steps. If executes successfully, then the averages will be stored inside the *averageArray* class member.  
 
 ```python
-   # EXAMPLE
-   ewma = ExponentialWMA(period='1d', ticker='AMZN', alpha=0.8, graph=True)
-   ewma.run()
-   plt.show()
+# EXAMPLE (Used for Visualizations below)
+ewma = ExponentialWMA(period='1d', ticker='AMZN', alpha=0.8, graph=True)
+ewma.run()
+plt.show()
 ```
 
 A *RunTime Exception* is raise in case of invalid parameters, failed download, or any unexpected error.
@@ -64,7 +64,6 @@ A *RunTime Exception* is raise in case of invalid parameters, failed download, o
 
 #### Libraries  
 * *yfinance*
-* *datetime*
 * *dataclasses*
 * *matplotlib*
 * *numpy*
