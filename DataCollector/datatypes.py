@@ -9,20 +9,22 @@ variant: dict = {
 
 ''' Default values '''
 default: dict = {
-    'variant': variant['Invalid'],
-    'interval': '30m',
-    'round': 3,
-    'column': 'Open',
-    'frequency': 5,
-    'alpha': 0.8,
-    'timeperiod': 14
+    'variant'       : variant['Invalid'],
+    'interval'      : '30m',
+    'round'         : 3,
+    'column'        : 'Open',
+    'frequency'     : 5,
+    'alpha'         : 0.8,
+    'timeperiod'    : 14,
+    'overbought'    : 70,
+    'oversold'      : 30
 }
 
 ''' Valid values '''
 valid: dict = {
-    'period': ['1d','5d','1mo','3mo','6mo','1y','2y','5y','10y','ytd','max'],
-    'interval': ['1m','2m','5m','15m','30m','60m','90m','1h','1d','5d','1wk','1mo','3mo'],
-    'column': ['Open', 'High', 'Low', 'Close', 'Adj Close', 'Volume']
+    'period'    : ['1d','5d','1mo','3mo','6mo','1y','2y','5y','10y','ytd','max'],
+    'interval'  : ['1m','2m','5m','15m','30m','60m','90m','1h','1d','5d','1wk','1mo','3mo'],
+    'column'    : ['Open', 'High', 'Low', 'Close', 'Adj Close', 'Volume']
 }
 
 ''' Dataframe columns '''

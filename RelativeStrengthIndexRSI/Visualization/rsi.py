@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from numpy import zeros as npZeros, subtract as npSubtract
-from matplotlib.pyplot import style as pltStyle, plot as pltPlot, title as pltTitle, xlabel as pltXlabel, ylabel as pltYlabel, legend as pltLegend, show as pltShow
+import matplotlib.pyplot as plt
+from matplotlib import gridspec
 from DataCollector.data_collector import DataCollector
 from DataCollector.datatypes import column, default, valid
 from wilderSmoothing import WilderSmoothing
@@ -8,9 +9,11 @@ from wilderSmoothing import WilderSmoothing
 @dataclass(frozen=True,kw_only=True, slots=True)
 class RSI:
 
-    ''' Calculates weighted average a given frequency/period (20MA, 50MA, and so on).
+    ''' Calculates RSI of given timeperiod (10, 14, and so on).
         Arguments:
             timeperiod   :   calculates rsi of last *timeperiod* data points
+            overbought   :   overbought line
+            oversold     :   oversold line
     '''
     start: str = ''
     end: str = ''
@@ -21,6 +24,8 @@ class RSI:
     column: str = 'Close'                                                                # Default column Close
     data: str = field(init=False, repr=False)
     rsiArray: str = field(init=False, repr=False)
+    overbought: int = default['overbought']                                              # overbought line. default 70.
+    oversold: int = default['oversold']                                                  # oversold line. default 30.
     graph: bool = False                                                                  # Graph the results. Default: False.
     
     def __validate(self) -> None:
@@ -32,6 +37,10 @@ class RSI:
             raise AssertionError('Invalid timeperiod. Timeperiod must be >= 1.')
         if self.column not in valid['column']:
             raise AssertionError('Invalid interval. Valid intervals include: ', valid['column'])
+        if not 1 <= self.overbought <= 100:
+          raise AssertionError('Invalid overbought. Overbought must be 1 <= x <= 100.')
+        if not 1 <= self.oversold <= 100:
+          raise AssertionError('Invalid overbought. Oversold must be 1 <= x <= 100.')
 
         # All other arguments checked by Data Collector
         return
@@ -64,6 +73,7 @@ class RSI:
       up, down = 0, 0             # values to add in up average or down average
       rs = 0
       rsi = 0
+      epsilon = 0.00000000000000000000001
       
       # averagerators
       upAvg = WilderSmoothing(timeperiod=timeperiod)
@@ -88,7 +98,7 @@ class RSI:
         downAvg.add(down)
         
         # calculate Relative Strength (RS)
-        rs = upAvg.avg / downAvg.avg
+        rs = upAvg.avg / (downAvg.avg+epsilon) if downAvg.avg == 0 else upAvg.avg / downAvg.avg
         
         # calulcate RSI
         rsi = 100 - (100/(1+rs))
@@ -98,22 +108,36 @@ class RSI:
 
 
       object.__setattr__(self, 'rsiArray', rsiArr)                # set avgArray, not copied
-      print(rsiArr)
       return
 
     def __graph(self)  -> None:
       ''' Graph (does not show, just plots, call show explicitly) '''
-      # Green if closes higher than opens
-      pltStyle.use('dark_background')
+      plt.style.use('dark_background')
+
+      fig = plt.figure()
+      gs = gridspec.GridSpec(nrows=2, ncols=1, height_ratios=[2, 1])
+      
+      # Main Graph
+      mainGraph = plt.subplot(gs[0])
       color = 'g' if self.data[-1] > self.data[0] else 'r'
-      pltPlot(self.data, color=color, label='%s'%self.ticker)
-      pltPlot(self.rsiArray, color='c', ls='dashed', label='MA (%s)'%self.timeperiod)
+      mainGraph.plot(self.data, color=color, label='%s'%self.ticker)
+      mainGraph.title.set_text('Relative Strength Index')
+      mainGraph.set_ylabel('Price ($)')
+      mainGraph.set_xticks([])
+      mainGraph.legend(loc='upper right')
       
-      pltTitle('Relative Strength Index')
-      pltXlabel('Datetime')
-      pltYlabel('Price ($)')
-      pltLegend(loc='upper right')
+      # RSI Graph
+      zorder = 1
+      rsiGraph = plt.subplot(gs[1])
+      rsiGraph.plot(self.rsiArray, color='y', label='RSI %s'%self.timeperiod, zorder=zorder)
+      rsiGraph.axvspan(0, self.timeperiod, color='w', zorder=zorder+1)
+      rsiGraph.set_xlabel('RSI')
+      rsiGraph.set_yticks([0, self.oversold, self.overbought, 100])
+      rsiGraph.axhline(self.overbought, linestyle='dashed')
+      rsiGraph.axhline(self.oversold, linestyle='dashed')
+      rsiGraph.legend(loc='upper right')
       
+      plt.subplots_adjust(wspace=0, hspace=0)
       return
     
     def run(self) -> None:
@@ -156,8 +180,3 @@ class RSI:
         
         '''
         print(info)
-
-if __name__ == '__main__':
-  rsi = RSI(ticker='AMZN', period='1mo', interval='15m', timeperiod=14, graph=True)
-  rsi.run()
-  pltShow()
