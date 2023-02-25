@@ -3,6 +3,7 @@ from numpy import zeros as npZeros, subtract as npSubtract
 from matplotlib.pyplot import style as pltStyle, plot as pltPlot, title as pltTitle, xlabel as pltXlabel, ylabel as pltYlabel, legend as pltLegend, show as pltShow
 from DataCollector.data_collector import DataCollector
 from DataCollector.datatypes import column, default, valid
+from wilderSmoothing import WilderSmoothing
 
 @dataclass(frozen=True,kw_only=True, slots=True)
 class RSI:
@@ -17,7 +18,7 @@ class RSI:
     ticker: str
     interval: str = default['interval']                                                  # Default variant 3
     timeperiod: int = default['timeperiod']                                              # Last *timeperiod* points moving average. Default 14.
-    column: str = column['Close']                                                        # Default column Close
+    column: str = 'Close'                                                                # Default column Close
     data: str = field(init=False, repr=False)
     rsiArray: str = field(init=False, repr=False)
     graph: bool = False                                                                  # Graph the results. Default: False.
@@ -92,9 +93,12 @@ class RSI:
         # calulcate RSI
         rsi = 100 - (100/(1+rs))
         rsiArr[i] = rsi
+        
+        i += 1
 
 
       object.__setattr__(self, 'rsiArray', rsiArr)                # set avgArray, not copied
+      print(rsiArr)
       return
 
     def __graph(self)  -> None:
