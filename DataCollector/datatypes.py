@@ -14,7 +14,8 @@ default: dict = {
     'round': 3,
     'column': 'Open',
     'frequency': 5,
-    'alpha': 0.8
+    'alpha': 0.8,
+    'timeperiod': 14
 }
 
 ''' Valid values '''
