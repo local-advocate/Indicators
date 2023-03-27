@@ -8,7 +8,7 @@ Implementation, visualization, back-testing, and real-time integration of indica
 
 ### Visualization
 
-* The indicators and the result of thier algorithms are plotted and visualized on a graph (including decisions to *buy*, *sell*, etc.)  
+* The indicators and the result of their algorithms are plotted and visualized on a graph (including decisions to *buy*, *sell*, etc.)  
 
 ### Back-Testing
 
