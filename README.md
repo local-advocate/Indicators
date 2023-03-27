@@ -1,6 +1,6 @@
 # Indicators
 
-Implementation, visualization, back-testing, and real-time integration of indicator strategies used in day trading.
+Implementation, visualization, back-testing, and real-time integration of indicators and strategies used in day trading.
 
 ### Implementation
 
